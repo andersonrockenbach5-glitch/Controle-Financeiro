@@ -174,11 +174,10 @@
     }
 
 
-    /* Ajustado para alinhar os filtros à direita quando junto ao título */
     .monthly-summary-options {
         display: flex;
         gap: 10px;
-        margin-bottom: 0; /* Remove margin-bottom as it's now inside a flex container */
+        margin-bottom: 15px;
         justify-content: flex-end; /* Alinha filtros à direita */
         flex-wrap: wrap;
     }
@@ -234,7 +233,7 @@
 </head>
 <body>
   <div class="top-nav-bar">
-    <a href="selecao.html" class="btn-nav"><i class="fas fa-home"></i> Home</a>
+    <a href="index.html" class="btn-nav"><i class="fas fa-home"></i> Home</a>
   </div>
 
   <header>
@@ -244,25 +243,23 @@
 
   <div class="container">
     <div class="card monthly-summary-card">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-            <h3 class="summary-title mb-0">Resumo Mensal</h3>
-            <div class="monthly-summary-options">
-                <select class="form-select" id="filtroMesResumoMensal">
-                    <option value="0">Janeiro</option>
-                    <option value="1">Fevereiro</option>
-                    <option value="2">Março</option>
-                    <option value="3">Abril</option>
-                    <option value="4">Maio</option>
-                    <option value="5">Junho</option>
-                    <option value="6">Julho</option>
-                    <option value="7">Agosto</option>
-                    <option value="8">Setembro</option>
-                    <option value="9">Outubro</option>
-                    <option value="10">Novembro</option>
-                    <option value="11">Dezembro</option>
-                </select>
-                <select class="form-select" id="filtroAnoResumoMensal"></select>
-            </div>
+        <h3 class="summary-title mb-3">Resumo Mensal</h3>
+        <div class="monthly-summary-options">
+            <select class="form-select" id="filtroMesResumoMensal">
+                <option value="0">Janeiro</option>
+                <option value="1">Fevereiro</option>
+                <option value="2">Março</option>
+                <option value="3">Abril</option>
+                <option value="4">Maio</option>
+                <option value="5">Junho</option>
+                <option value="6">Julho</option>
+                <option value="7">Agosto</option>
+                <option value="8">Setembro</option>
+                <option value="9">Outubro</option>
+                <option value="10">Novembro</option>
+                <option value="11">Dezembro</option>
+            </select>
+            <select class="form-select" id="filtroAnoResumoMensal"></select>
         </div>
         <div class="summary-grid">
             <div class="summary-item">
@@ -340,25 +337,23 @@
     </div>
 
     <div class="card detailed-records-card">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-            <h3 class="mb-0">Resumo Diário</h3>
-            <div class="monthly-summary-options">
-                <select class="form-select" id="filtroMesTabela">
-                    <option value="0">Janeiro</option>
-                    <option value="1">Fevereiro</option>
-                    <option value="2">Março</option>
-                    <option value="3">Abril</option>
-                    <option value="4">Maio</option>
-                    <option value="5">Junho</option>
-                    <option value="6">Julho</option>
-                    <option value="7">Agosto</option>
-                    <option value="8">Setembro</option>
-                    <option value="9">Outubro</option>
-                    <option value="10">Novembro</option>
-                    <option value="11">Dezembro</option>
-                </select>
-                <select class="form-select" id="filtroAnoTabela"></select>
-            </div>
+        <h3 class="mb-3">Resumo Diário</h3>
+        <div class="monthly-summary-options">
+            <select class="form-select" id="filtroMesTabela">
+                <option value="0">Janeiro</option>
+                <option value="1">Fevereiro</option>
+                <option value="2">Março</option>
+                <option value="3">Abril</option>
+                <option value="4">Maio</option>
+                <option value="5">Junho</option>
+                <option value="6">Julho</option>
+                <option value="7">Agosto</option>
+                <option value="8">Setembro</option>
+                <option value="9">Outubro</option>
+                <option value="10">Novembro</option>
+                <option value="11">Dezembro</option>
+            </select>
+            <select class="form-select" id="filtroAnoTabela"></select>
         </div>
         <div class="table-container">
             <table class="table table-striped daily-summary-table">
@@ -646,8 +641,7 @@
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${dia.data}</td>
-                <td class="text-primary-blue">${formatarMoeda(dia.receita)}</td>
-                <td class="text-danger">${formatarMoeda(dia.gastos)}</td>
+                <td class="text-primary-blue">${formatarMoeda(dia.receita)}</td> <td class="text-danger">${formatarMoeda(dia.gastos)}</td>
                 <td class="${dia.lucro >= 0 ? 'text-success' : 'text-danger'}">${formatarMoeda(dia.lucro)}</td>
             `;
             dailySummaryTableBody.appendChild(row);

@@ -119,16 +119,33 @@
             width: 100%;
             max-width: 800px;
         }
+
+        /* Estilos para o Modal de Mensagens */
+        .custom-modal-header {
+            background-color: var(--body-bg-start);
+            color: var(--text-color-light);
+            border-bottom: none;
+            border-top-left-radius: calc(var(--border-radius-card) - 0.5rem);
+            border-top-right-radius: calc(var(--border-radius-card) - 0.5rem);
+        }
+
+        .custom-modal-body {
+            color: var(--text-color-dark);
+        }
+
+        .custom-modal-footer {
+            border-top: none;
+        }
     </style>
 </head>
 <body>
     <div class="top-nav-bar">
-        <a href="selecao.html" class="btn-nav"><i class="fas fa-home"></i> Home</a>
+        <a href="index.html" class="btn-nav"><i class="fas fa-home"></i> Home</a>
     </div>
 
     <header>
         <h1 class="fw-bold">Adicionar Receita</h1>
-        <p>Registre seus ganhos diários</p>
+        <p>Registe os seus ganhos diários</p>
     </header>
 
     <div class="container">
@@ -169,7 +186,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100 mt-4">Adicionar Receita</button>
-                <button type="button" class="btn btn-secondary w-100 mt-2" onclick="window.location.href='selecao.html'">Voltar</button>
+                <button type="button" class="btn btn-secondary w-100 mt-2" onclick="window.location.href='index.html'">Voltar</button>
             </form>
         </div>
     </div>
@@ -178,8 +195,62 @@
         <p>&copy; 2025 - Anderson Rockenbach</p>
     </footer>
 
+    <!-- Modal de Mensagens Personalizado -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header custom-modal-header">
+                    <h5 class="modal-title" id="messageModalLabel">Mensagem</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body custom-modal-body" id="messageModalBody">
+                    <!-- Conteúdo da mensagem aqui -->
+                </div>
+                <div class="modal-footer custom-modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script type="module">
+        // Importações do Firebase (agora diretamente no script)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Variáveis globais fornecidas pelo ambiente Canvas
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Autentica o utilizador ao carregar o módulo
+        async function initializeAuth() {
+            if (typeof __initial_auth_token !== 'undefined') {
+                try {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                    console.log("Autenticação com token personalizado bem-sucedida.");
+                } catch (error) {
+                    console.error("Erro na autenticação com token personalizado:", error);
+                    // Fallback para login anónimo se o token personalizado falhar
+                    await signInAnonymously(auth);
+                    console.log("Autenticação anónima bem-sucedida (fallback).");
+                }
+            } else {
+                await signInAnonymously(auth);
+                console.log("Autenticação anónima bem-sucedida.");
+            }
+        }
+
+        // Chama a função de autenticação imediatamente
+        initializeAuth();
+
+        // Elementos do formulário
         const receitaForm = document.getElementById('receitaForm');
         const dataReceita = document.getElementById('dataReceita');
         const plataforma = document.getElementById('plataforma');
@@ -187,35 +258,58 @@
         const gorjetas = document.getElementById('gorjetas');
         const observacoesReceita = document.getElementById('observacoesReceita');
 
+        // Elementos do modal de mensagens
+        const messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
+        const messageModalBody = document.getElementById('messageModalBody');
+
+        /**
+         * Exibe uma mensagem num modal personalizado.
+         * @param {string} message - A mensagem a ser exibida.
+         */
+        function showMessageModal(message) {
+            messageModalBody.textContent = message;
+            messageModal.show();
+        }
+
+        // Define a data atual como padrão no campo de data
         dataReceita.valueAsDate = new Date();
 
-        receitaForm.addEventListener('submit', (event) => {
-            event.preventDefault();
+        // Listener para o envio do formulário
+        receitaForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Previne o comportamento padrão de envio do formulário
 
-            const registros = JSON.parse(localStorage.getItem('registros')) || [];
+            try {
+                const userId = auth.currentUser?.uid || crypto.randomUUID(); // Obtém o UID do utilizador ou gera um ID aleatório
 
-            const novoRegistro = {
-                id: Date.now(),
-                tipo: 'receita',
-                data: dataReceita.value,
-                plataforma: plataforma.value,
-                receita: parseFloat(valorCorrida.value),
-                gorjetas: parseFloat(gorjetas.value || 0),
-                despesas: 0,
-                categoriaDespesa: '',
-                kmRodados: 0,
-                combustivelLitros: 0,
-                observacoes: observacoesReceita.value.trim()
-            };
+                // Cria o novo objeto de registo de receita
+                const novoRegistro = {
+                    tipo: 'receita',
+                    data: dataReceita.value,
+                    plataforma: plataforma.value,
+                    receita: parseFloat(valorCorrida.value),
+                    gorjetas: parseFloat(gorjetas.value || 0),
+                    despesas: 0, // Receita não tem despesa
+                    categoriaDespesa: '', // Receita não tem categoria de despesa
+                    kmRodados: 0, // Não aplicável para receita neste formulário
+                    combustivelLitros: 0, // Não aplicável para receita neste formulário
+                    observacoes: observacoesReceita.value.trim(),
+                    // Adiciona o userId para associar o registo ao utilizador
+                    userId: userId,
+                    createdAt: new Date() // Carimbo de data/hora para ordenação e auditoria
+                };
 
-            registros.push(novoRegistro);
-            localStorage.setItem('registros', JSON.stringify(registros));
-
-            alert('Receita adicionada com sucesso!');
-            receitaForm.reset();
-            dataReceita.valueAsDate = new Date();
-            valorCorrida.value = '0.00';
-            gorjetas.value = '0.00';
+                // Adiciona o documento à coleção 'registros' sob o caminho do utilizador
+                const docRef = await addDoc(collection(db, `artifacts/${appId}/users/${userId}/registros`), novoRegistro);
+                
+                showMessageModal('Receita adicionada com sucesso!');
+                receitaForm.reset(); // Limpa o formulário
+                dataReceita.valueAsDate = new Date(); // Redefine a data para hoje
+                valorCorrida.value = '0.00'; // Redefine o valor da corrida
+                gorjetas.value = '0.00'; // Redefine gorjetas
+            } catch (error) {
+                console.error('Erro ao adicionar receita:', error);
+                showMessageModal(`Erro ao adicionar receita: ${error.message}`);
+            }
         });
     </script>
 </body>
